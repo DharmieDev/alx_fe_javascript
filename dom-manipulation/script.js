@@ -271,7 +271,7 @@ async function postQuoteToServer(quote) {
     const response = await fetch(SERVER_URL, {
       method: "POST",
       headers: {
-          "Content-type": "application/json"
+          "Content-Type": "application/json"
         },
       body: JSON.stringify(quote)
     });
