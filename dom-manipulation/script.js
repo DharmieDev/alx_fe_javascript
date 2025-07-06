@@ -22,6 +22,58 @@ function showRandomQuote() {
   `;
 }
 
+// Function to create and display a form for adding new quotes
+function createAddQuoteForm() {
+  // Create form elements
+  const form = document.createElement("form");
+  form.id = "quoteForm";
+
+  const textLabel = document.createElement("label");
+  textLabel.textContent = "Quote Text:";
+  const textInput = document.createElement("input");
+  textInput.type = "text";
+  textInput.required = true;
+
+  const categoryLabel = document.createElement("label");
+  categoryLabel.textContent = "Category:";
+  const categoryInput = document.createElement("input");
+  categoryInput.type = "text";
+  categoryInput.required = true;
+
+  const submitBtn = document.createElement("button");
+  submitBtn.type = "submit";
+  submitBtn.textContent = "Add Quote";
+
+  form.appendChild(textLabel);
+  form.appendChild(textInput);
+  form.appendChild(document.createElement("br"));
+
+  form.appendChild(categoryLabel);
+  form.appendChild(categoryInput);
+  form.appendChild(document.createElement("br"));
+
+  form.appendChild(submitBtn);
+  document.body.appendChild(form);
+
+  // Handle form submission
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const newQuote = {
+      text: textInput.value.trim(),
+      category: categoryInput.value.trim(),
+    };
+
+    if (newQuote.text && newQuote.category) {
+      quotes.push(newQuote);
+      alert("Quote added successfully!");
+      form.reset();
+    } else {
+      alert("Please fill in both fields.");
+    }
+  });
+}
+
 // Function to add a new quote
 function addQuote() {
   const textInput = document.getElementById("newQuoteText");
@@ -46,10 +98,8 @@ function addQuote() {
   showRandomQuote();
 }
 
-// Set up the event listener when DOM is loaded
-document.addEventListener("DOMContentLoaded", function () {
-  document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+// Event listener to show a new quote when button is clicked
+newQuoteBtn.addEventListener("click", showRandomQuote);
 
-  // Show an initial quote
-  showRandomQuote();
-});
+// Create the quote form when the page loads
+createAddQuoteForm();
