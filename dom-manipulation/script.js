@@ -1,5 +1,6 @@
 // Array of quote objects
 let quotes = [];
+let lastSyncedQuotes = [];
 
 // Load quotes from localStorage on page load
 function loadQuotes() {
@@ -162,6 +163,70 @@ function filterQuotes() {
   showRandomQuote();
 }
 
+// ===== Simulated Server API Calls =====
+
+// Simulate GET from server (randomly select 2 quotes)
+function fetchQuotesFromServer() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const serverQuotes = [
+        { text: "Only those who dare to fail greatly can ever achieve greatly.", category: "Inspiration" },
+        { text: "Don't watch the clock; do what it does. Keep going.", category: "Productivity" }
+      ];
+      resolve(serverQuotes);
+    }, 1000);
+  });
+}
+
+// Simulate POST to server
+function postQuotesToServer(newQuotes) {
+  return new Promise((resolve) => {
+    console.log("Posting quotes to server (simulated):", newQuotes);
+    setTimeout(() => resolve(true), 500);
+  });
+}
+
+// ===== Conflict Resolution & Syncing =====
+
+function syncWithServer() {
+  fetchQuotesFromServer().then(serverQuotes => {
+    const serverTexts = new Set(serverQuotes.map(q => q.text));
+    const localTexts = new Set(quotes.map(q => q.text));
+
+    let conflictDetected = false;
+
+    serverQuotes.forEach(serverQuote => {
+      if (!localTexts.has(serverQuote.text)) {
+        quotes.push(serverQuote);
+        conflictDetected = true;
+      }
+    });
+
+    if (conflictDetected) {
+      saveQuotes();
+      populateCategories();
+      showNotification("Quotes synced from server. New quotes added.");
+    }
+
+    // Simulate pushing new local quotes to server (if any)
+    const newLocalQuotes = quotes.filter(q => !serverTexts.has(q.text));
+    if (newLocalQuotes.length > 0) {
+      postQuotesToServer(newLocalQuotes);
+    }
+
+    lastSyncedQuotes = serverQuotes;
+  });
+}
+
+function showNotification(message) {
+  const notification = document.getElementById("syncNotification");
+  notification.textContent = message;
+  notification.style.display = "block";
+  setTimeout(() => {
+    notification.style.display = "none";
+  }, 5000);
+}
+
 // ======= EXPORT QUOTES TO JSON =======
 function exportToJsonFile() {
   const dataStr = JSON.stringify(quotes, null, 2); // formatted JSON
@@ -217,4 +282,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+
+  // Start syncing with server every 10 seconds
+  syncWithServer(); // initial call
+  setInterval(syncWithServer, 10000);
 });
