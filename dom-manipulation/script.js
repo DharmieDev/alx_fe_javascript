@@ -163,70 +163,6 @@ function filterQuotes() {
   showRandomQuote();
 }
 
-// ===== Simulated Server API Calls =====
-
-// Simulate GET from server (randomly select 2 quotes)
-function fetchQuotesFromServer() {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const serverQuotes = [
-        { text: "Only those who dare to fail greatly can ever achieve greatly.", category: "Inspiration" },
-        { text: "Don't watch the clock; do what it does. Keep going.", category: "Productivity" }
-      ];
-      resolve(serverQuotes);
-    }, 1000);
-  });
-}
-
-// Simulate POST to server
-function postQuotesToServer(newQuotes) {
-  return new Promise((resolve) => {
-    console.log("Posting quotes to server (simulated):", newQuotes);
-    setTimeout(() => resolve(true), 500);
-  });
-}
-
-// ===== Conflict Resolution & Syncing =====
-
-function syncWithServer() {
-  fetchQuotesFromServer().then(serverQuotes => {
-    const serverTexts = new Set(serverQuotes.map(q => q.text));
-    const localTexts = new Set(quotes.map(q => q.text));
-
-    let conflictDetected = false;
-
-    serverQuotes.forEach(serverQuote => {
-      if (!localTexts.has(serverQuote.text)) {
-        quotes.push(serverQuote);
-        conflictDetected = true;
-      }
-    });
-
-    if (conflictDetected) {
-      saveQuotes();
-      populateCategories();
-      showNotification("Quotes synced from server. New quotes added.");
-    }
-
-    // Simulate pushing new local quotes to server (if any)
-    const newLocalQuotes = quotes.filter(q => !serverTexts.has(q.text));
-    if (newLocalQuotes.length > 0) {
-      postQuotesToServer(newLocalQuotes);
-    }
-
-    lastSyncedQuotes = serverQuotes;
-  });
-}
-
-function showNotification(message) {
-  const notification = document.getElementById("syncNotification");
-  notification.textContent = message;
-  notification.style.display = "block";
-  setTimeout(() => {
-    notification.style.display = "none";
-  }, 5000);
-}
-
 // ======= EXPORT QUOTES TO JSON =======
 function exportToJsonFile() {
   const dataStr = JSON.stringify(quotes, null, 2); // formatted JSON
@@ -282,8 +218,73 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   document.getElementById("newQuote").addEventListener("click", showRandomQuote);
-
-  // Start syncing with server every 10 seconds
-  syncWithServer(); // initial call
-  setInterval(syncWithServer, 10000);
 });
+
+const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // Using posts as mock endpoint
+
+// Convert quotes to a string (used for conflict comparison)
+function stringifyQuotes(quotesArray) {
+  return JSON.stringify([...quotesArray].sort((a, b) => a.text.localeCompare(b.text)));
+}
+
+// Show notification
+function showSyncNotification(message = 'Quotes updated from server due to conflict.') {
+  const notification = document.getElementById("syncNotification");
+  notification.textContent = message;
+  notification.style.display = "block";
+  setTimeout(() => {
+    notification.style.display = "none";
+  }, 5000);
+}
+
+// Fetch quotes from "server" and sync with local
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const serverPosts = await response.json();
+
+    // Simulate server quotes structure
+    const serverQuotes = serverPosts.slice(0, 10).map(post => ({
+      text: post.title,
+      category: "Server"
+    }));
+
+    const localStr = stringifyQuotes(quotes);
+    const serverStr = stringifyQuotes(serverQuotes);
+
+    // If server and local quotes differ, overwrite local with server
+    if (localStr !== serverStr) {
+      quotes = serverQuotes;
+      saveQuotes();
+      populateCategories();
+      showRandomQuote();
+      showSyncNotification();
+    }
+  } catch (error) {
+    console.error("Error syncing with server:", error);
+  }
+}
+
+// Simulate posting new quote to server
+async function postQuoteToServer(quote) {
+  try {
+    const response = await fetch(SERVER_URL, {
+      method: "POST",
+      body: JSON.stringify(quote),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8"
+      }
+    });
+
+    const data = await response.json();
+    console.log("Quote sent to server (simulated):", data);
+  } catch (error) {
+    console.error("Failed to post to server:", error);
+  }
+}
+
+// Sync every 30 seconds
+function startSync() {
+  fetchQuotesFromServer(); // initial
+  setInterval(fetchQuotesFromServer, 30000); // every 30 seconds
+}
