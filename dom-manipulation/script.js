@@ -236,8 +236,13 @@ function showSyncNotification(message = 'Quotes updated from server due to confl
     notification.style.display = "none";
   }, 5000);
 }
+// Wrapper to manually trigger syncing from server
+async function syncQuotes() {
+  await fetchQuotesFromServer();
+}
 
 // Fetch quotes from "server" and sync with local
+
 async function fetchQuotesFromServer() {
   try {
     const response = await fetch(SERVER_URL);
