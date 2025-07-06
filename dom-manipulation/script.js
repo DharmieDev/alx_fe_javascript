@@ -28,14 +28,42 @@ function saveQuotes() {
   localStorage.setItem("quotes", JSON.stringify(quotes));
 }
 
+function populateCategories() {
+  const categoryFilter = document.getElementById("categoryFilter");
+  const selected = localStorage.getItem("selectedCategory") || "all";
+
+  // Clear all options except 'all'
+  categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
+
+  const categories = [...new Set(quotes.map(q => q.category))];
+
+  categories.forEach(category => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    categoryFilter.appendChild(option);
+  });
+
+  // Restore last selected filter
+  categoryFilter.value = selected;
+}
+
 // Get the DOM elements
 const quoteDisplay = document.getElementById("quoteDisplay");
 const newQuoteBtn = document.getElementById("newQuote");
 
 // Function to show a random quote
 function showRandomQuote() {
+  const category = document.getElementById("categoryFilter").value;
+  const filteredQuotes = category === "all" ? quotes : quotes.filter(q => q.category === category);
   const randomIndex = Math.floor(Math.random() * quotes.length);
   const quote = quotes[randomIndex];
+
+  if (filteredQuotes.length === 0) {
+    document.getElementById("quoteDisplay").innerHTML = `<p>No quotes in this category.</p>`;
+    return;
+  }
+
   quoteDisplay.innerHTML = `
     <p><strong>Quote:</strong> ${quote.text}</p>
     <p><em>Category:</em> ${quote.category}</p>
@@ -119,6 +147,7 @@ function addQuote() {
 
   // Optionally show the newly added quote
   showRandomQuote();
+  populateCategories();
 }
 
 // Event listener to show a new quote when button is clicked
@@ -126,6 +155,12 @@ newQuoteBtn.addEventListener("click", showRandomQuote);
 
 // Create the quote form when the page loads
 createAddQuoteForm();
+
+function filterQuotes() {
+  const selected = document.getElementById("categoryFilter").value;
+  localStorage.setItem("selectedCategory", selected);
+  showRandomQuote();
+}
 
 // ======= EXPORT QUOTES TO JSON =======
 function exportToJsonFile() {
@@ -167,6 +202,7 @@ function importFromJsonFile(event) {
 // ======= INITIALIZE ON PAGE LOAD =======
 document.addEventListener("DOMContentLoaded", function () {
   loadQuotes();
+    populateCategories();
 
   // Show last quote from session if available
   const lastQuote = sessionStorage.getItem("lastQuote");
