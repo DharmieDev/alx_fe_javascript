@@ -264,6 +264,10 @@ async function fetchQuotesFromServer() {
       populateCategories();
       showRandomQuote();
       showSyncNotification();
+      console.log("Quotes synced with server!"); // ✅ Log to console
+    }
+    else {
+      console.log("No changes during sync. Local and server data are identical.");
     }
   } catch (error) {
     console.error("Error syncing with server:", error);
